@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "histdata.fullname" . }}
+  labels:
+    {{- include "histdata.labels" . | nindent 4 }}
+data:
+  SPRING_PROFILES_ACTIVE: {{ .Values.application.profile | quote }}
+  AWS_REGION: {{ .Values.application.awsRegion | quote }}
+  HISTDATA_S3_BUCKET: {{ .Values.application.s3Bucket | quote }}
+  DB_URL: {{ .Values.application.dbUrl | quote }}
+  DOWNLOAD_TIMEOUT_MS: {{ .Values.application.downloadTimeoutMs | quote }}
+  JPA_DDL_AUTO: "validate"
+

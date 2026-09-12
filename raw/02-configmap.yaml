@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: histdata-app
+  namespace: histdata
+data:
+  SPRING_PROFILES_ACTIVE: aws
+  AWS_REGION: ap-south-1
+  HISTDATA_S3_BUCKET: REPLACE_BUCKET
+  DB_URL: jdbc:oracle:thin:@//REPLACE_RDS_ENDPOINT:1521/HISTDB
+  JPA_DDL_AUTO: validate
+

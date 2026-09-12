@@ -1,0 +1,21 @@
+replicaCount: 2
+
+image:
+  repository: 000000000000.dkr.ecr.ap-south-1.amazonaws.com/histdata-app
+  tag: replace-with-git-sha
+
+serviceAccount:
+  roleArn: arn:aws:iam::000000000000:role/histdata-dev-histdata-app
+
+application:
+  awsRegion: ap-south-1
+  s3Bucket: histdata-dev-000000000000-ap-south-1
+  dbUrl: jdbc:oracle:thin:@//histdata-dev-oracle.example.ap-south-1.rds.amazonaws.com:1521/HISTDB
+
+externalSecret:
+  remoteSecretArn: arn:aws:secretsmanager:ap-south-1:000000000000:secret:replace-me
+
+ingress:
+  host: histdata.example.com
+  certificateArn: arn:aws:acm:ap-south-1:000000000000:certificate/replace-me
+

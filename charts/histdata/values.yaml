@@ -1,0 +1,59 @@
+replicaCount: 2
+
+image:
+  repository: 000000000000.dkr.ecr.ap-south-1.amazonaws.com/histdata-app
+  tag: replace-me
+  pullPolicy: IfNotPresent
+
+serviceAccount:
+  create: true
+  name: histdata-app
+  roleArn: arn:aws:iam::000000000000:role/histdata-dev-histdata-app
+
+application:
+  profile: aws
+  awsRegion: ap-south-1
+  s3Bucket: replace-me
+  dbUrl: jdbc:oracle:thin:@//replace-me:1521/HISTDB
+  downloadTimeoutMs: "900000"
+
+externalSecret:
+  enabled: true
+  refreshInterval: 1h
+  secretStoreName: aws-secrets-manager
+  remoteSecretArn: replace-me
+  targetSecretName: histdata-db
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8080
+
+ingress:
+  enabled: true
+  className: alb
+  host: histdata.example.com
+  certificateArn: arn:aws:acm:ap-south-1:000000000000:certificate/replace-me
+  scheme: internet-facing
+
+resources:
+  requests:
+    cpu: 250m
+    memory: 512Mi
+  limits:
+    cpu: "1"
+    memory: 1Gi
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 6
+  targetCPUUtilizationPercentage: 70
+
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+networkPolicy:
+  enabled: false
+
