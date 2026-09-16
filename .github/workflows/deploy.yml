@@ -24,9 +24,9 @@ jobs:
       - uses: azure/setup-helm@v4
       - uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
-          aws-region: ap-south-1
-      - run: aws eks update-kubeconfig --name histdata-dev-eks --region ap-south-1
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN  }}
+          aws-region: us-east-1
+      - run: aws eks update-kubeconfig --name histdata-dev-eks --region us-east-1
       - name: Deploy immutable image
         run: |
           helm upgrade --install histdata charts/histdata \
