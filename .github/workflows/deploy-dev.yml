@@ -1,0 +1,143 @@
+name: deploy-histdata-dev
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: "Immutable ECR image tag (Git commit SHA)"
+        required: true
+        type: string
+
+concurrency:
+  group: histdata-dev-deployment
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: us-east-1
+  AWS_ACCOUNT_ID: "935776475838"
+  EKS_CLUSTER_NAME: histdata-dev-eks
+  ECR_REPOSITORY: histdata-app
+  KUBERNETES_NAMESPACE: histdata
+  HELM_RELEASE: histdata
+  IMAGE_REPOSITORY: 935776475838.dkr.ecr.us-east-1.amazonaws.com/histdata-app
+
+jobs:
+  validate:
+    name: Validate Helm chart
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout deployment repository
+        uses: actions/checkout@v4
+
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+
+      - name: Lint Helm chart
+        run: |
+          helm lint charts/histdata \
+            -f environments/dev/values.yaml \
+            --set-string image.tag="${{ inputs.image_tag }}"
+
+      - name: Render Kubernetes manifests
+        run: |
+          helm template histdata charts/histdata \
+            --namespace histdata \
+            -f environments/dev/values.yaml \
+            --set-string image.tag="${{ inputs.image_tag }}" \
+            > /tmp/histdata-rendered.yaml
+
+      - name: Check rendered manifests
+        run: |
+          test -s /tmp/histdata-rendered.yaml
+          grep -E "^kind:" /tmp/histdata-rendered.yaml
+
+  deploy:
+    name: Deploy to Dev
+    if: github.ref == 'refs/heads/main'
+    needs: validate
+
+    runs-on: [self-hosted, linux, x64, histdata-dev]
+    environment: dev
+
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout deployment repository
+        uses: actions/checkout@v4
+
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v4
+
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+
+      - name: Configure AWS credentials using OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          role-session-name: histdata-dev-deployment
+          aws-region: ${{ env.AWS_REGION }}
+          allowed-account-ids: ${{ env.AWS_ACCOUNT_ID }}
+
+      - name: Verify AWS identity
+        run: aws sts get-caller-identity
+
+      - name: Verify image exists in ECR
+        run: |
+          aws ecr describe-images \
+            --repository-name "${ECR_REPOSITORY}" \
+            --image-ids imageTag="${{ inputs.image_tag }}" \
+            --region "${AWS_REGION}"
+
+      - name: Configure kubectl
+        run: |
+          aws eks update-kubeconfig \
+            --name "${EKS_CLUSTER_NAME}" \
+            --region "${AWS_REGION}"
+
+      - name: Verify Kubernetes access
+        run: |
+          kubectl auth can-i get deployments \
+            --namespace "${KUBERNETES_NAMESPACE}"
+
+          kubectl auth can-i create clustersecretstores.external-secrets.io
+
+      - name: Deploy application with Helm
+        run: |
+          helm upgrade --install "${HELM_RELEASE}" charts/histdata \
+            --namespace "${KUBERNETES_NAMESPACE}" \
+            --create-namespace \
+            -f environments/dev/values.yaml \
+            --set-string image.repository="${IMAGE_REPOSITORY}" \
+            --set-string image.tag="${{ inputs.image_tag }}" \
+            --atomic \
+            --wait \
+            --timeout 10m
+
+      - name: Verify rollout
+        run: |
+          kubectl rollout status \
+            deployment/histdata-histdata \
+            --namespace "${KUBERNETES_NAMESPACE}" \
+            --timeout=5m
+
+          kubectl get pods \
+            --namespace "${KUBERNETES_NAMESPACE}" \
+            -o wide
+
+          kubectl get ingress \
+            --namespace "${KUBERNETES_NAMESPACE}"
+
+      - name: Verify application health
+        run: |
+          curl --fail \
+            --retry 10 \
+            --retry-delay 10 \
+            --max-time 20 \
+            https://dev.histdata.sagarshetty.online/actuator/health/readiness
