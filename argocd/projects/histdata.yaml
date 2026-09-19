@@ -1,0 +1,24 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: histdata
+  namespace: argocd
+spec:
+  description: HistData applications
+
+  sourceRepos:
+    - https://github.com/SagarSangishetty/histdata-k8s-deployments.git
+
+  destinations:
+    - namespace: histdata
+      server: https://kubernetes.default.svc
+
+  namespaceResourceWhitelist:
+    - group: "*"
+      kind: "*"
+
+  clusterResourceWhitelist:
+    - group: ""
+      kind: Namespace
+    - group: external-secrets.io
+      kind: ClusterSecretStore

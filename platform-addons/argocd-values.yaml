@@ -1,0 +1,9 @@
+configs:
+  cm:
+    application.resourceTrackingMethod: annotation
+
+server:
+  service:
+    type: ClusterIP
+  ingress:
+    enabled: false
