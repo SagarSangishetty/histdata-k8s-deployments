@@ -17,7 +17,7 @@ externalSecret:
 
 ingress:
   host: dev.histdata.sagarshetty.online
-  certificateArn: arn:aws:acm:us-east-1:935776475838:certificate/db7ddd02-afe4-49f8-82e2-5ee456471dcf
+  certificateArn: arn:aws:acm:us-east-1:935776475838:certificate/fdd1460d-c14f-48fb-ac85-c15c33d8d4c9
 
 autoscaling:
   enabled: false
