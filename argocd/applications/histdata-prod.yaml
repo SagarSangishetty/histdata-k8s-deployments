@@ -1,0 +1,40 @@
+# Apply this Application in the prod cluster only after prod values are filled,
+# platform add-ons and AppProject are installed, and the image is in prod ECR.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: histdata-prod
+  namespace: argocd
+spec:
+  project: histdata
+
+  source:
+    repoURL: https://github.com/SagarSangishetty/histdata-k8s-deployments.git
+    targetRevision: main
+    path: charts/histdata
+    helm:
+      releaseName: histdata
+      valueFiles:
+        - ../../environments/prod/values.yaml
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: histdata
+
+  syncPolicy:
+    automated:
+      enabled: true
+      prune: true
+      selfHeal: true
+      allowEmpty: false
+    syncOptions:
+      - CreateNamespace=true
+      - PruneLast=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+
+  revisionHistoryLimit: 10

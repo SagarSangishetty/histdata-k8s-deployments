@@ -8,9 +8,18 @@ on:
 jobs:
   helm:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
       - uses: azure/setup-helm@v4
-      - run: helm lint charts/histdata -f environments/dev/values.yaml
-      - run: mkdir -p rendered && helm template histdata charts/histdata --namespace histdata -f environments/dev/values.yaml > rendered/histdata.yaml
-
+      - name: Validate dev chart
+        run: |
+          helm lint charts/histdata -f environments/dev/values.yaml
+          helm template histdata charts/histdata --namespace histdata \
+            -f environments/dev/values.yaml >/dev/null
+      - name: Validate prod chart
+        run: |
+          helm lint charts/histdata -f environments/prod/values.yaml
+          helm template histdata charts/histdata --namespace histdata \
+            -f environments/prod/values.yaml >/dev/null

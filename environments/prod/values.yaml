@@ -1,0 +1,33 @@
+# Fill REPLACE_* values after prod Terraform outputs are available.
+# Do not apply the prod Argo CD Application until these are replaced
+# and the selected image has been promoted to prod ECR.
+replicaCount: 3
+
+image:
+  repository: 708553018735.dkr.ecr.us-east-1.amazonaws.com/histdata-app
+  tag: REPLACE_WITH_PROMOTED_COMMIT_SHA
+
+serviceAccount:
+  roleArn: REPLACE_WITH_APP_IRSA_ROLE_ARN
+
+application:
+  profile: aws
+  awsRegion: us-east-1
+  s3Bucket: REPLACE_WITH_HISTORICAL_DATA_BUCKET
+  dbUrl: jdbc:oracle:thin:@//REPLACE_WITH_ORACLE_HOST:1521/HISTDB
+
+externalSecret:
+  remoteSecretArn: REPLACE_WITH_APPLICATION_SECRET_ARN
+
+ingress:
+  host: prod.histdata.sagarshetty.online
+  certificateArn: REPLACE_WITH_ACM_CERTIFICATE_ARN
+
+autoscaling:
+  enabled: true
+  minReplicas: 3
+  maxReplicas: 6
+
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 2
