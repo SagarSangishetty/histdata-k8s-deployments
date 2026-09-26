@@ -1,0 +1,101 @@
+name: deploy-histdata-prod
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: histdata-prod-deployment
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: us-east-1
+  AWS_ACCOUNT_ID: "708553018735"
+  EKS_CLUSTER_NAME: histdata-prod-eks
+  KUBERNETES_NAMESPACE: histdata
+
+jobs:
+  validate:
+    name: Validate prod GitOps configuration
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout deployment repository
+        uses: actions/checkout@v4
+
+      - name: Reject unfilled prod placeholders
+        run: |
+          if grep -n 'REPLACE_' environments/prod/values.yaml; then
+            echo "Fill prod infrastructure outputs and promoted image tag first"
+            exit 1
+          fi
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+
+      - name: Validate and render prod chart
+        run: |
+          helm lint charts/histdata -f environments/prod/values.yaml
+          helm template histdata charts/histdata \
+            --namespace histdata \
+            -f environments/prod/values.yaml > /tmp/histdata-prod-rendered.yaml
+          test -s /tmp/histdata-prod-rendered.yaml
+
+  deploy:
+    name: Register prod Argo CD application and verify
+    needs: validate
+    runs-on: [self-hosted, linux, x64, histdata-prod]
+    environment: prod
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout deployment repository
+        uses: actions/checkout@v4
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v4
+
+      - name: Assume prod EKS deployment role
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_PROD_ARN }}
+          role-session-name: histdata-prod-gitops
+          aws-region: ${{ env.AWS_REGION }}
+          allowed-account-ids: ${{ env.AWS_ACCOUNT_ID }}
+
+      - name: Configure access to prod EKS
+        run: |
+          test "$(aws sts get-caller-identity --query Account --output text)" = "$AWS_ACCOUNT_ID"
+          aws eks update-kubeconfig --name "$EKS_CLUSTER_NAME" --region "$AWS_REGION"
+          kubectl auth can-i create applications.argoproj.io --namespace argocd | grep -qx yes
+          kubectl auth can-i create appprojects.argoproj.io --namespace argocd | grep -qx yes
+
+      - name: Ensure prod Argo CD and CRDs are ready
+        run: |
+          kubectl get namespace argocd
+          kubectl get crd applications.argoproj.io appprojects.argoproj.io
+          kubectl get pods --namespace argocd
+
+      - name: Register prod project and application
+        run: |
+          kubectl apply -f argocd/projects/histdata.yaml
+          kubectl apply -f argocd/applications/histdata-prod.yaml
+
+      - name: Wait for Argo CD sync and health
+        run: |
+          for attempt in $(seq 1 60); do
+            sync="$(kubectl get application histdata-prod -n argocd -o jsonpath='{.status.sync.status}')"
+            health="$(kubectl get application histdata-prod -n argocd -o jsonpath='{.status.health.status}')"
+            echo "Attempt $attempt: sync=$sync health=$health"
+            if [[ "$sync" == "Synced" && "$health" == "Healthy" ]]; then
+              exit 0
+            fi
+            sleep 10
+          done
+          kubectl describe application histdata-prod -n argocd
+          exit 1
