@@ -2,32 +2,25 @@
 # Do not apply the prod Argo CD Application until these are replaced
 # and the selected image has been promoted to prod ECR.
 replicaCount: 3
-
 image:
   repository: 708553018735.dkr.ecr.us-east-1.amazonaws.com/histdata-app
-  tag: REPLACE_WITH_PROMOTED_COMMIT_SHA
-
+  tag: e1d888f122ff966d1edeb72fedc5ea7213dbce79
 serviceAccount:
   roleArn: arn:aws:iam::708553018735:role/histdata-prod-histdata-app
-
 application:
   profile: aws
   awsRegion: us-east-1
   s3Bucket: histdata-prod-708553018735-us-east-1
   dbUrl: jdbc:oracle:thin:@//histdata-prod-oracle.c0j0iugyiinh.us-east-1.rds.amazonaws.com:1521/HISTDB
-
 externalSecret:
   remoteSecretArn: arn:aws:iam::708553018735:role/histdata-prod-external-secrets
-
 ingress:
   host: prod.histdata.sagarshetty.online
   certificateArn: arn:aws:acm:us-east-1:708553018735:certificate/be1dbfbe-f44f-43d9-a61e-0503137ee2af
-
 autoscaling:
   enabled: true
   minReplicas: 3
   maxReplicas: 6
-
 podDisruptionBudget:
   enabled: true
   minAvailable: 2
