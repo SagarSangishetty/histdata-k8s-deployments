@@ -2,6 +2,7 @@ replicaCount: 2
 image:
   repository: 935776475838.dkr.ecr.us-east-1.amazonaws.com/histdata-app
   tag: e1d888f122ff966d1edeb72fedc5ea7213dbce79
+
 serviceAccount:
   roleArn: arn:aws:iam::935776475838:role/histdata-dev-histdata-app
 application:
@@ -15,3 +16,4 @@ ingress:
   certificateArn: arn:aws:acm:us-east-1:935776475838:certificate/fdd1460d-c14f-48fb-ac85-c15c33d8d4c9
 autoscaling:
   enabled: false
+
