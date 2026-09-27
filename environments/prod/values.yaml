@@ -13,7 +13,7 @@ application:
   s3Bucket: histdata-prod-708553018735-us-east-1
   dbUrl: jdbc:oracle:thin:@//histdata-prod-oracle.c0j0iugyiinh.us-east-1.rds.amazonaws.com:1521/HISTDB
 externalSecret:
-  remoteSecretArn: arn:aws:iam::708553018735:role/histdata-prod-external-secrets
+  remoteSecretArn: arn:aws:secretsmanager:us-east-1:708553018735:secret:histdata-prod/oracle/application-Y34Wi8
 ingress:
   host: prod.histdata.sagarshetty.online
   certificateArn: arn:aws:acm:us-east-1:708553018735:certificate/be1dbfbe-f44f-43d9-a61e-0503137ee2af
