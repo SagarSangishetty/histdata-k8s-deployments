@@ -1,23 +1,24 @@
 replicaCount: 2
-
 image:
   repository: 935776475838.dkr.ecr.us-east-1.amazonaws.com/histdata-app
   tag: e1d888f122ff966d1edeb72fedc5ea7213dbce79
 
 serviceAccount:
   roleArn: arn:aws:iam::935776475838:role/histdata-dev-histdata-app
-
 application:
   awsRegion: us-east-1
   s3Bucket: histdata-dev-935776475838-us-east-1
   dbUrl: jdbc:oracle:thin:@//histdata-dev-oracle.c6z8ka82gj45.us-east-1.rds.amazonaws.com:1521/HISTDB
-
 externalSecret:
+<<<<<<< HEAD
   remoteSecretArn: arn:aws:iam::935776475838:role/histdata-dev-external-secrets
 
+=======
+  remoteSecretArn: arn:aws:secretsmanager:us-east-1:935776475838:secret:histdata-dev/oracle/application-AFRfIt
+>>>>>>> 540f94cfe7d1d71d07d7b90594bd5a8fc7106e0b
 ingress:
   host: dev.histdata.sagarshetty.online
   certificateArn: arn:aws:acm:us-east-1:935776475838:certificate/fdd1460d-c14f-48fb-ac85-c15c33d8d4c9
-
 autoscaling:
   enabled: false
+
