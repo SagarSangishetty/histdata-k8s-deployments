@@ -8,20 +8,20 @@ image:
   tag: REPLACE_WITH_PROMOTED_COMMIT_SHA
 
 serviceAccount:
-  roleArn: REPLACE_WITH_APP_IRSA_ROLE_ARN
+  roleArn: arn:aws:iam::708553018735:role/histdata-prod-histdata-app
 
 application:
   profile: aws
   awsRegion: us-east-1
-  s3Bucket: REPLACE_WITH_HISTORICAL_DATA_BUCKET
-  dbUrl: jdbc:oracle:thin:@//REPLACE_WITH_ORACLE_HOST:1521/HISTDB
+  s3Bucket: histdata-prod-708553018735-us-east-1
+  dbUrl: jdbc:oracle:thin:@//histdata-prod-oracle.c0j0iugyiinh.us-east-1.rds.amazonaws.com:1521/HISTDB
 
 externalSecret:
-  remoteSecretArn: REPLACE_WITH_APPLICATION_SECRET_ARN
+  remoteSecretArn: arn:aws:iam::708553018735:role/histdata-prod-external-secrets
 
 ingress:
   host: prod.histdata.sagarshetty.online
-  certificateArn: REPLACE_WITH_ACM_CERTIFICATE_ARN
+  certificateArn: arn:aws:acm:us-east-1:708553018735:certificate/be1dbfbe-f44f-43d9-a61e-0503137ee2af
 
 autoscaling:
   enabled: true
