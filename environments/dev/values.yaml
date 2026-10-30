@@ -16,4 +16,10 @@ ingress:
   certificateArn: arn:aws:acm:us-east-1:935776475838:certificate/1ee745bc-c11c-4f8b-b1eb-b12403201afa
 autoscaling:
   enabled: false
-
+monitoring:
+  enabled: true
+  release: monitoring
+  port: http
+  path: /actuator/prometheus
+  interval: 30s
+  scrapeTimeout: 10s
